@@ -1,0 +1,186 @@
+options:
+	prefix: &6&lKry&e&lBans &7| &f
+	author: Kril0n
+	version: 1.1
+	nopermissionmessage: &cYou are lacking the permission for that!
+	
+on load:
+	broadcast "{@prefix}Thank your for using KryBans by {@author}! KryBans is currently on version {@version}."
+	
+command /krybans [<text>] [<offline player>]:
+	aliases: kbans
+	trigger:
+		if arg-1 is not set:
+			if player has permission "krybans.help":
+				send "&6&lKry&e&lBans"
+				send "&71. &e/krybans help"
+				send "&72. &e/krybans ban (player)"
+				send "&73. &e/krybans unban (player)"
+				send "&74. &e/krybans mute (player)"
+				send "&75. &e/krybans unmute (player)"
+				send "&74. &e/krybans checkip (player)"
+				send "&75. &e/krybans alts (player)"
+				send "&76. &e/krybans freeze (player)"
+				send "&77. &e/krybans unfreeze (player)"
+				send "&76. &e/krybans about"
+			else:
+				send "{@nopermissionmessage}"
+		else:
+			if arg-1 is "help":
+				if player has permission "krybans.help":
+					send "&6&lKry&e&lBans"
+					send "&71. &e/krybans help"
+					send "&72. &e/krybans ban (player)"
+					send "&73. &e/krybans unban (player)"
+					send "&74. &e/krybans mute (player)"
+					send "&75. &e/krybans unmute (player)"
+					send "&74. &e/krybans checkip (player)"
+					send "&75. &e/krybans alts (player)"
+					send "&76. &e/krybans freeze (player)"
+					send "&77. &e/krybans unfreeze (player)"
+					send "&76. &e/krybans about"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "ban":
+				if player has permission "krybans.ban":
+					if arg-2 is set:
+						if arg-2 is not banned:
+							kick arg-2 due to "{@prefix}You have been banned by %player%!"
+							ban arg-2 due to "{@prefix}You have been banned by %player%!"
+							set {banned::%arg-2's uuid%} to true
+							loop all players where [input has permission "krybans.seepunishments"]:
+								send "{@prefix}%arg-2% has been banned by %player%!" to loop-player
+						else:
+							send "{@prefix}%arg-2% is already banned!"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "mute":
+				if player has permission "krybans.mute":
+					if arg-2 is set:
+						if {muted::%arg-2's uuid%} is not set: 
+							set {muted::%arg-2's uuid%} to true
+							loop all players where [input has permission "krybans.seepunishments"]:
+								send "{@prefix}%arg-2% has been muted by %player%" to loop-player
+							send "{@prefix}You have been muted by %player%!" to arg-2
+						else:
+							send "{@prefix}That player is already muted!"
+					else:
+						send "{@prefix}Plese sate a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "unban":
+				if player has permission "krybans.unmute":
+					if arg-2 is set:
+						if arg-2 is banned:
+							unban arg-2
+							delete {banned::%arg-2's uuid%}
+							loop all players where [input has permission "krybans.seepunishments"]:
+								send "{@prefix}%arg-2% has been unbanned by %player%" to loop-player
+						else:
+							send "{@prefix}%arg-2% is not banned!"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "unmute":
+				if player has permission "krybans.unmute":
+					if arg-2 is set:
+						if {muted::%arg-2's uuid%} is set:
+							delete {muted::%arg-2's uuid%}
+							loop all players where [input has permission "krybans.seepunishments"]:
+								send "{@prefix}%arg-2% has been unmuted by %player%!" to loop-player
+							send "{@prefix}You have been unmuted by %player%!" to arg-2
+						else:
+							send "{@prefix}%arg-2% is not muted!"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "checkip" or "check":
+				if player has permission "krybans.check":
+					if arg-2 is set:
+						send "{@prefix}%arg-2%'s IP is %arg-2's ip% %nl%{@prefix}%arg-2%'s uuid is %arg-2's uuid%"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "alts":
+				if player has permission "krybans.alts":
+					if arg-2 is set:
+						send "{@prefix}%arg-2%'s alts are %{alts::%arg-2's ip%::*}%"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "about":
+				send "{@prefix}KryBans is made by {@author}! The current version of KryBans is {@version}!"
+			if arg-1 is "freeze":
+				if player has permission "krybans.freeze":
+					if arg-2 is set:
+						if {frozen::%arg-2's uuid%} is not set:
+							set {frozen::%arg-2's uuid%} to true
+							loop all players where [input has permission "staff.seepunishments"]:
+								send "{@prefix}%arg-2% has been frozen by %player%!" to loop-player
+							send "{@prefix}You have been frozen by a staff member! Please wait for instructions!" to arg-2
+						else:
+							send "{@prefix}%arg-2% is already frozen!"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+			if arg-1 is "unfreeze":
+				if player has permission "krybans.unfreeze":
+					if arg-2 is set:
+						if {frozen::%arg-2's uuid%} is set:
+							delete {frozen::%arg-2's uuid%}
+							loop all players where [input has permission "staff.seepunishments"]:
+								send "{@prefix}%arg-2% has been unfrozen by %player%!"
+							send "{@prefix}You have been unfrozen!" to arg-2
+						else:
+							send "{@prefix}%arg-2% is not frozen!"
+					else:
+						send "{@prefix}Please state a player!"
+				else:
+					send "{@nopermissionmessage}"
+				
+on join:
+	if {ips::%player's uuid%::*} is not set:
+		add "%player's ip% (%now%)" to {ips::%player's uuid%::*}
+	loop {ips::%player's uuid%::*}:
+		set {_res} to loop-value
+		if {_res} contains player's ip:
+			stop
+	add "%player's ip% - %now%" to {ips::%player's uuid%::*}
+
+on join:
+	if {alts::%player's ip%::*} does not contain player:
+		add player to {alts::%player's ip%::*}
+
+on join:
+	wait 10 ticks
+	loop {alts::%player's ip%::*}:
+		add 1 to {_a}
+		if {_a} is greater than 1:
+			loop all players where [input has permission "krybans.alts"]:
+				send "{@prefix}%player% has joined and has alts." to loop-player
+				send "{@prefix}%{alts::%player's ip%::*}%" to loop-player
+
+on join:
+	if {banned::%player's uuid%} is set:
+		set join message to ""
+		kick player
+
+on leave:
+	if {banned::%player's uuid%} is set:
+		set leave message to ""
+			
+on player move:
+	if {frozen::%player's uuid%} is set:
+		cancel event
+		send "{@prefix}You have been frozen by a staff member! Please wait for instructions!"
+				
+on tab complete of "/krybans":
+	set tab completions for position 1 to "help" and "ban" and "unban" and "mute" and "unmute" and "checkip" and "check" and "alts" and "about" and "freeze" and "unfreeze"
+	set tab completions for position 2 to all players

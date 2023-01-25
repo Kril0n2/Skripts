@@ -1,0 +1,12 @@
+function afkpool():
+	loop all players:
+		if "%region at loop-player%" contains "afk":
+			chance of 50%:
+				console command "/goldencrates givekey %loop-player% afk"
+			chance of 30%:
+				console command "/goldencrates givekey %loop-player% elf"
+			chance of 20%:
+				console command "/goldencrates givekey %loop-player% gear"
+
+every 30 minutes:
+	afkpool()

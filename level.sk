@@ -1,0 +1,155 @@
+options:
+    levelmult: 999
+    startlevel: 0
+    prefix: &a&lLEVELS &7| &e
+
+command /resetlevels:
+    permission: op
+    trigger:
+        broadcast "{@prefix}Levels have been reset!"
+        delete {level::*}
+        delete {xpneeded::*}
+        delete {joined::*}
+        set {_temp} to 3
+        loop 10 times:
+            console command "/hd setline leveltop %{_temp}% ."
+            increase {_temp} by 1
+
+function regex(n: object) :: text:
+	if "%{_n}%" contains ".":
+		set {_s::*} to split "%{_n}%" at "."
+		set {_n} to "%a({_s::1})%.%last 2 characters of {_s::2}%"
+		return "%{_n}%"
+	else:
+		set {_n} to a("%{_n}%")
+		return "%{_n} ? 0%"
+function a(b: text) :: text:
+	if length of {_b} > 3:
+		return "%a(first length of {_b} - 3 characters of {_b})%,%last 3 characters of {_b}%"
+	return {_b}
+
+function leveltop():
+    loop sorted indices of {level::*} in descending order:
+        set {_playername} to loop-value parsed as offline player
+        stop if {_Leveltop-placement} >= 10
+        execute console command "/hd setline LEVELTOP %{_Leveltop-placement} + 3% &e%{_Leveltop-placement} + 1%. &b%{_playername}%&7: &a%{Level::%loop-value%}%"
+        
+        add 1 to {_Leveltop-placement}
+
+function leveltop2():
+    loop sorted indices of {level::*} in descending order:
+        set {_playername} to loop-value parsed as offline player
+        stop if {_Leveltop2-placement} >= 1
+        console command "/npc select 9"
+        console command "/npc skin Herobrine"
+        execute console command "/npc skin %{_playername}%"
+        set {_u} to uuid of {_playername}
+        set {_p} to prefix of {_playername}
+        console command "/npc rename %{prefix::%{_u}%}% &7%{_playername}%"
+        
+        add 1 to {_Leveltop2-placement}
+
+function levelup(p: player):
+    set {_u} to uuid of {_p}
+    if {level::%{_u}%} = 0:
+        set {level::%{_u}%} to 1
+        set {xpneeded::%{_u}%} to ({level::%{_u}%} * {@levelmult})
+        send "","{@prefix}You have leveled up to level %{level::%{_u}%}%","&eYou need %regex({xpneeded::%{_u}%})% xp to level up again!","" to {_p}
+        set line 3 of {_p}'s scoreboard to "&fXP Required: &e%regex({xpneeded::%{_u}%})%"
+        set line 4 of {_p}'s scoreboard to "&fLevel: &a%{level::%{_u}%}%"
+    else:
+        increase {level::%{_u}%} by 1
+        set {xpneeded::%{_u}%} to ({level::%{_u}%} * {@levelmult})
+        send "","{@prefix}You have leveled up to level %{level::%{_u}%}%","&eYou need %regex({xpneeded::%{_u}%})% xp to level up again!","" to {_p}
+        set line 3 of {_p}'s scoreboard to "&fXP Required: &e%regex({xpneeded::%{_u}%})%"
+        set line 4 of {_p}'s scoreboard to "&fLevel: &a%{level::%{_u}%}%"
+    play sound "entity.player.levelup" to {_p}
+
+function wheatxp(p: player):
+    set {_u} to uuid of {_p}
+    if {xpneeded::%{_u}%} <= 0:
+        levelup({_p})
+    else:
+        reduce {xpneeded::%{_u}%} by 14.65
+        set line 3 of {_p}'s scoreboard to "&fXP Required: &e%regex({xpneeded::%{_u}%})%"
+
+function carrotxp(p: player):
+    set {_u} to uuid of {_p}
+    if {xpneeded::%{_u}%} <= 0:
+        levelup({_p})
+    else:
+        reduce {xpneeded::%{_u}%} by 19.35
+        set line 3 of {_p}'s scoreboard to "&fXP Required: &e%regex({xpneeded::%{_u}%})%"
+
+function obbyxp(p: player):
+    set {_u} to uuid of {_p}
+    if {xpneeded::%{_u}%} <= 0:
+        levelup({_p})
+    else:
+        reduce {xpneeded::%{_u}%} by 69.55
+        set line 3 of {_p}'s scoreboard to "&fXP Required: &e%regex({xpneeded::%{_u}%})%"
+
+on join:
+    if {level::%player's uuid%} is not set:
+        set {level::%player's uuid%} to {@startlevel}
+        set {xpneeded::%player's uuid%} to ({@levelmult} / 2)
+        wait 10 ticks
+        console command "/levelup %player%"
+
+command /level [<player>]:
+    trigger:
+        if arg-1 is set:
+            set {_a} to uuid of arg-1
+            send "{@prefix}%arg-1% is level &a%{level::%{_a}%}% &eand needs &a%{xpneeded::%{_a}%}% &emore xp to level up!"
+        else:
+            send "{@prefix}You are level &a%{level::%player's uuid%}% &e and need &a%{xpneeded::%player's uuid%}% &emore xp to level up!"
+
+on mine of coal ore or iron ore or lapis ore:
+    wheatxp(player)
+
+on mine of gold ore or diamond ore or emerald ore:
+    carrotxp(player)
+
+on mine of ancient debris or beacon:
+    obbyxp(player)
+
+every minute:
+    leveltop()
+    leveltop2()
+
+command /updatelevels:
+    permission: op
+    trigger:
+        leveltop()
+        leveltop2()
+	
+command /leveltop:
+    trigger:
+        set {_place.%player%} to 1
+        send "&e&lLeveltop:"
+        loop sorted indices of {level::*} in descending order:
+            set {_p} to loop-value parsed as offline player
+            if {_place.%player%} < 11:
+                send "&7%{_place.%player%}%. &e%{_p}%&7: &a%{level::%loop-value%}%"
+                add 1 to {_place.%player%}
+
+command /levelup <player> [<integer>]:
+    permission: op
+    trigger:
+        if arg-2 is not set:
+            levelup(arg-1)
+        else:
+            loop arg-2 times:
+                levelup(arg-1)
+on join:
+    set {prefix::%player's uuid%} to player's prefix
+
+on leave:
+    set {prefix::%player's uuid%} to player's prefix
+
+on death of player:
+    if attacker is player:
+        set {_c} to a random integer between 1 and 100
+        if {_c} is 1 or 2 or 3:
+            console command "levelup %attacker% %{_c}%"
+            send "","{@prefix}You found the secret chance to levelup!", and "" to attacker

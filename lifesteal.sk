@@ -1,0 +1,124 @@
+#--------Credits--------
+#LifeSteal v1.0
+#Addons Needed: Skript (Obv) and SkBee
+#Crystals currently do not give hearts (working on making that)
+
+#Skript created by Kril0n#3313
+
+#--------Start of Skript--------
+
+options:
+	prefix: &c&lLife&4&lSteal
+	starthearts: 10
+	maxhearts: 1023 #Max hearts is (numb} + 1 Example: if you want 50 you do 49
+
+function update(p: player):
+    set {_u} to uuid of {_p}
+    set {_p}'s max health to {hearts::%{_u}%}
+
+
+on join:
+	if {joined::%player's uuid%} is not set:
+		set {joined::%player's uuid%} to true
+		set {hearts::%player's uuid%} to 10
+		update(player)
+		
+on death of player:
+	if attacker is not player:
+		if {hearts::%victim's uuid%} > 1:
+			reduce {hearts::%victim's uuid%} by 1
+			update(victim)
+	else:
+		if {hearts::%victim's uuid%} > 1:
+			if {hearts::%attacker's uuid%} <= {@maxhearts}:
+				reduce {hearts::%victim's uuid%} by 1
+				update(victim)
+				increase {hearts::%attacker's uuid%} by 1
+				update(attacker)
+			else:
+				wait 1 tick
+				send "{@prefix} &7| &cYou have the max health!" to attacker
+				send "{@prefix} &7| &cYou did not lose a heart due to %attacker% having the max hearts!" to victim
+		else:
+			wait 1 tick
+			send "{@prefix} &7| &cYou did not lose a heart due to you only having one!" to victim
+			send "{@prefix} &7| &cYou did not gain a heart due to %victim% having only one heart!" to attacker
+			
+#--------Commands--------
+
+command /givehearts <player> <integer>:
+	trigger:
+		if arg-2 > 0:
+			if {hearts::%player's uuid%} > arg-2:
+				if {hearts::%arg-1's uuid%} <= {@maxhearts}:
+					reduce {hearts::%player's uuid%} by arg-2
+					increase {hearts::%arg-1's uuid%} by arg-2
+					update(player)
+					update(arg-1)
+					send "{@prefix} &7| &cYou have given %arg-1% %arg-2% hearts!" to player
+					send "{@prefix} &7| &c%player% has given you %arg-2% hearts!" to arg-1
+				else:
+					send "{@prefix} &7| &c%arg-1% has the max hearts!"
+			else:
+				send "{@prefix} &7| &cYou do not have enough hearts to do that!"
+		else:
+			send "{@prefix} &7| &cYou can only use numbers above 0!"
+
+command /checkhearts <player>:
+    trigger:
+        send "{@prefix} &7| &c%arg-1% has %{hearts::%arg-1's uuid%}% heart(s)!"
+				
+command /lsadmin [<text>] [<offline player>] [<text>]:
+	permission: lifesteal.admin
+	trigger:
+		if arg-1 is "reset":
+			set {hearts::%arg-2's uuid%} to 10
+			update(arg-2)
+			send " " to player and arg-2
+			send "{@prefix} &7| &cYour hearts have been reset!" to arg-2
+			send "{@prefix} &7| &cYou have reset %arg-2%'s hearts!" to player
+			send " " to player and arg-2
+		if arg-1 is "set":
+			set {hearts::%arg-2's uuid%} to arg-3 parsed as integer
+			update(arg-2)
+			send " " to player and arg-2
+			send "{@prefix} &7| &cYour hearts have been set to %arg-3%!" to arg-2
+			send "{@prefix} &7| &cYou have set %arg-2%'s hearts to %arg-3%!" to player
+			send " " to player and arg-2
+		if arg-1 is "add":
+			increase {hearts::%arg-2's uuid%} by arg-3 parsed as integer
+			update(arg-2)
+			send " " to player and arg-2
+			send "{@prefix} &7| &cYou now have %arg-3% more hearts!" to arg-2
+			send "{@prefix} &7| &cYou added %arg-3% more hearts to %arg-2%!" to player
+			send " " to player and arg-2
+		if arg-1 is "addall":
+			loop all players:
+				console command "/lsadmin add %loop-player% %arg-2%"
+		if arg-1 is "remove":
+			reduce {hearts::%arg-2's uuid%} by arg-3 parsed as integer
+			update(arg-2)
+			send " " to player and arg-2
+			send "{@prefix} &7| &cYou now have %arg-3% less hearts!" to arg-2
+			send "{@prefix} &7| &cYou added %arg-3% less hearts to %arg-2%!" to player
+			send " " to player and arg-2
+		if arg-1 is "removeall":
+			loop all players:
+				console command "/lsadmin remove %loop-player% %arg-2%"
+		if arg-1 is "seasonreset":
+			delete {joined::*}
+			broadcast " "
+			broadcast "{@prefix} &7| &cEveryones hearts have been reset! You will be auto kicked!"
+			broadcast " "
+			wait 2 seconds
+			kick all players
+
+		
+
+        
+#--------TAB COMPLETE--------
+
+on tab complete of "/lsadmin":
+	set tab completions for position 1 to "add", "addall", "remove", "removeall", "set", "seasonreset", and "reset"
+	if tab arg-1 is not "addall" or "removeall":
+		set tab completions for position 2 to all players
